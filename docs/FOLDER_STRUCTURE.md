@@ -1,9 +1,5 @@
 ---
 name: FOLDER_STRUCTURE.md
-owner_role: Architect
-maintainers:
-  - Architect
-  - Project Manager
 minimal: false
 created: 2026-03-25
 updated: 2026-03-25

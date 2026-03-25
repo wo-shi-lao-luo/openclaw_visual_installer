@@ -15,8 +15,10 @@ Accepted
 
 ### 1. OpenClaw Install Method
 **Official curl script.**
-The installer will execute OpenClaw's official curl installation script inside the WSL distro.
-Verification signal (specific port/URL to check for accessibility) to be confirmed when the curl script is examined at implementation start.
+```
+curl -fsSL https://openclaw.ai/install.sh | bash
+```
+Verification signal (specific port/URL to check for accessibility) to be confirmed from the install script output.
 
 ### 2. Recommended Distro
 **Ubuntu** (latest LTS available via `wsl --install`).
@@ -50,7 +52,23 @@ This avoids surprising users with silent elevation while still offering a fast p
 **Manual for MVP.** Automated E2E tests (Playwright) are deferred. All five PRD scenarios (A–E) will be manually verified by the maintainer during development.
 Automated E2E coverage is a Phase 2 addition.
 
+## Install Flow (confirmed)
+
+1. `detect_existing` — `which openclaw`
+2. `run_script` — `curl -fsSL https://openclaw.ai/install.sh | bash -s -- --no-onboard`
+3. `verify_install` — `which openclaw`
+4. `start_gateway` — `openclaw gateway start`
+5. `verify_gateway` — `openclaw gateway status`
+
+Gateway runs on port **18789** (loopback only by default).
+
+Other useful commands confirmed:
+- `openclaw configure` — interactive config wizard
+- `openclaw doctor` — diagnostics
+- `openclaw logs --follow` — log tailing
+- `openclaw gateway stop / restart`
+
 ## Open Items
 
-- Exact port/URL that OpenClaw exposes for accessibility verification — to be confirmed from curl script
 - Whether "Ubuntu" means a specific LTS version (22.04 vs 24.04) — default to whatever `wsl --install` provides; can pin later
+- `openclaw configure` is required before `gateway start` succeeds — installer currently relies on the user completing config before clicking Install. Phase 2 may add guided config flow.

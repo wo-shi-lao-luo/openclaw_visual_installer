@@ -1,9 +1,15 @@
 import { app, BrowserWindow, shell } from 'electron'
 import { join } from 'path'
 import { is } from '@electron-toolkit/utils'
+import { registerIpcHandlers } from './ipc/handlers'
+
+// WSL/Linux: disable GPU acceleration to avoid WebGL initialization failures
+app.disableHardwareAcceleration()
+
+let mainWindow: BrowserWindow | null = null
 
 function createWindow(): void {
-  const mainWindow = new BrowserWindow({
+  mainWindow = new BrowserWindow({
     width: 800,
     height: 600,
     resizable: false,
@@ -15,7 +21,11 @@ function createWindow(): void {
   })
 
   mainWindow.on('ready-to-show', () => {
-    mainWindow.show()
+    mainWindow!.show()
+  })
+
+  mainWindow.on('closed', () => {
+    mainWindow = null
   })
 
   mainWindow.webContents.setWindowOpenHandler((details) => {
@@ -31,7 +41,9 @@ function createWindow(): void {
 }
 
 app.whenReady().then(() => {
+  registerIpcHandlers(() => mainWindow?.webContents ?? null)
   createWindow()
+
   app.on('activate', function () {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
   })

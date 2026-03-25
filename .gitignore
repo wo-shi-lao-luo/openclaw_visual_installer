@@ -1,5 +1,38 @@
+# Dependencies
 node_modules/
+
+# Build output
 out/
 dist/
-.DS_Store
+
+# Logs
 *.log
+npm-debug.log*
+
+# Editor
+.DS_Store
+.vscode/
+.idea/
+*.suo
+*.user
+
+# Environment / secrets
+.env
+.env.*
+
+# Electron packaging output
+release/
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Vitest / coverage
+coverage/
+
+# Windows Zone.Identifier sidecar files (created when downloading from browser)
+*:Zone.Identifier
+
+# AI development files (Claude Code)
+CLAUDE.md
+TASKS.md
+.claude/
