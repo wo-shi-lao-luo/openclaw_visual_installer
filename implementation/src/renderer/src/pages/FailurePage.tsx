@@ -4,7 +4,7 @@ import { installerStore } from '../store/installer-store'
 import { StepList } from '../components/StepList'
 
 export function FailurePage(): React.JSX.Element {
-  const { installResult, goTo, setInstallResult, addProgressStep } = useStore(installerStore, (s) => s)
+  const { installResult, goTo, setInstallResult, addProgressStep, installMode } = useStore(installerStore, (s) => s)
   const error = installResult?.error
 
   const handleRetry = async (): Promise<void> => {
@@ -12,7 +12,7 @@ export function FailurePage(): React.JSX.Element {
     const unsubscribe = window.installer.onInstallProgress((step) => {
       addProgressStep(step)
     })
-    const result = await window.installer.startInstall()
+    const result = await window.installer.startInstall(installMode)
     unsubscribe()
     setInstallResult(result)
   }

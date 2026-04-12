@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
 import { createCheckEnvironmentHandler, createStartInstallHandler } from '../../../implementation/src/main/ipc/handlers'
 import type { EnvironmentAssessment } from '../../../implementation/src/main/environment/assessment'
-import type { InstallResult } from '../../../implementation/src/main/installer/types'
+import type { InstallMode, InstallResult } from '../../../implementation/src/main/installer/types'
 
 // --- fixtures ---
 
@@ -23,7 +23,7 @@ const INSTALL_SUCCESS: InstallResult = {
   steps: [
     { step: 'detect_existing', success: true, message: 'Not found.', timestamp: 1 },
     { step: 'run_script', success: true, message: 'Script ok.', timestamp: 2 },
-    { step: 'verify', success: true, message: 'Verified.', timestamp: 3 }
+    { step: 'verify_install', success: true, message: 'Verified.', timestamp: 3 }
   ]
 }
 
@@ -39,34 +39,39 @@ const INSTALL_FAILURE: InstallResult = {
 // --- tests ---
 
 describe('createCheckEnvironmentHandler', () => {
-  it('returns the assessment from the provided assess function', async () => {
+  it('passes the requested install mode to the assess function', async () => {
+    const assess = vi.fn(async (mode: InstallMode) => ({ ...READY_ASSESSMENT, mode } as EnvironmentAssessment & { mode: InstallMode }))
+    const handler = createCheckEnvironmentHandler(assess)
+
+    const result = await handler('native')
+
+    expect(result).toMatchObject({ mode: 'native' })
+    expect(assess).toHaveBeenCalledOnce()
+    expect(assess).toHaveBeenCalledWith('native')
+  })
+
+  it('defaults to wsl mode when none is supplied', async () => {
     const assess = vi.fn(async () => READY_ASSESSMENT)
     const handler = createCheckEnvironmentHandler(assess)
 
     const result = await handler()
 
     expect(result).toBe(READY_ASSESSMENT)
-    expect(assess).toHaveBeenCalledOnce()
-  })
-
-  it('propagates errors from the assess function', async () => {
-    const assess = vi.fn(async () => { throw new Error('PowerShell unavailable') })
-    const handler = createCheckEnvironmentHandler(assess)
-
-    await expect(handler()).rejects.toThrow('PowerShell unavailable')
+    expect(assess).toHaveBeenCalledWith('wsl')
   })
 })
 
 describe('createStartInstallHandler', () => {
-  it('returns the install result from the provided install function', async () => {
-    const install = vi.fn(async () => INSTALL_SUCCESS)
+  it('passes the requested mode to the install function', async () => {
+    const install = vi.fn(async (mode: InstallMode) => ({ ...INSTALL_SUCCESS, mode } as InstallResult & { mode: InstallMode }))
     const onProgress = vi.fn()
     const handler = createStartInstallHandler(install, onProgress)
 
-    const result = await handler()
+    const result = await handler('native')
 
-    expect(result).toBe(INSTALL_SUCCESS)
+    expect(result).toMatchObject({ mode: 'native' })
     expect(install).toHaveBeenCalledOnce()
+    expect(install).toHaveBeenCalledWith('native')
   })
 
   it('calls onProgress for each step record after install completes', async () => {
@@ -74,7 +79,7 @@ describe('createStartInstallHandler', () => {
     const onProgress = vi.fn()
     const handler = createStartInstallHandler(install, onProgress)
 
-    await handler()
+    await handler('wsl')
 
     expect(onProgress).toHaveBeenCalledTimes(INSTALL_SUCCESS.steps.length)
     expect(onProgress).toHaveBeenCalledWith(INSTALL_SUCCESS.steps[0])

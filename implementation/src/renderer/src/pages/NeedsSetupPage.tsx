@@ -7,18 +7,21 @@ export function NeedsSetupPage(): React.JSX.Element {
   const assessment = useStore(installerStore, (s) => s.assessment)
   const goTo = useStore(installerStore, (s) => s.goTo)
   const setAssessment = useStore(installerStore, (s) => s.setAssessment)
+  const installMode = useStore(installerStore, (s) => s.installMode)
 
   const handleRecheck = async (): Promise<void> => {
     goTo('checking')
-    const updated = await window.installer.checkEnvironment()
+    const updated = await window.installer.checkEnvironment(installMode)
     setAssessment(updated)
   }
+
+  const modeLabel = installMode === 'native' ? 'native Windows mode' : 'WSL mode'
 
   return (
     <div style={styles.page}>
       <h2 style={styles.title}>Setup required</h2>
       <p style={styles.subtitle}>
-        The following issues must be resolved before OpenClaw can be installed.
+        The following issues must be resolved before OpenClaw can be installed in {modeLabel}.
       </p>
       {assessment && <BlockerList blockers={assessment.blockers} />}
       <p style={styles.hint}>

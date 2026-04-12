@@ -1,5 +1,5 @@
 import type { EnvironmentAssessment } from '../environment/assessment'
-import type { InstallResult } from '../installer/types'
+import type { InstallMode, InstallResult } from '../installer/types'
 
 /**
  * All IPC channel names used between main and renderer.
@@ -18,3 +18,5 @@ export interface IpcResponses {
   [IPC.CHECK_ENVIRONMENT]: EnvironmentAssessment
   [IPC.START_INSTALL]: InstallResult
 }
+
+export type InstallerRequestMode = InstallMode

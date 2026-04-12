@@ -1,3 +1,5 @@
+export type InstallMode = 'wsl' | 'native'
+
 export type InstallState =
   | 'not_installed'
   | 'installing'
@@ -34,14 +36,19 @@ export interface InstallResult {
   error?: InstallError
 }
 
-export interface WslCommandResult {
+export interface CommandResult {
   stdout: string
   stderr: string
   exitCode: number
 }
 
 /**
- * Abstraction over WSL command execution.
- * Injected into the orchestrator so tests can mock it without touching real WSL.
+ * Abstraction over shell command execution.
+ * Injected into the orchestrator so tests can mock it without touching real WSL or the host shell.
  */
-export type WslRunner = (command: string, distro?: string) => Promise<WslCommandResult>
+export type CommandRunner = (command: string) => Promise<CommandResult>
+
+/** @deprecated Use CommandResult */
+export type WslCommandResult = CommandResult
+/** @deprecated Use CommandRunner */
+export type WslRunner = CommandRunner

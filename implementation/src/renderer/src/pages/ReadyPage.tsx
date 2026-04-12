@@ -3,7 +3,7 @@ import { useStore } from 'zustand'
 import { installerStore } from '../store/installer-store'
 
 export function ReadyPage(): React.JSX.Element {
-  const { goTo, setInstallResult, addProgressStep } = useStore(installerStore, (s) => s)
+  const { goTo, setInstallResult, addProgressStep, installMode } = useStore(installerStore, (s) => s)
 
   const handleInstall = async (): Promise<void> => {
     goTo('installing')
@@ -12,10 +12,15 @@ export function ReadyPage(): React.JSX.Element {
       addProgressStep(step)
     })
 
-    const result = await window.installer.startInstall()
+    const result = await window.installer.startInstall(installMode)
     unsubscribe()
     setInstallResult(result)
   }
+
+  const detailText =
+    installMode === 'native'
+      ? 'OpenClaw will be installed directly on Windows using npm.'
+      : 'OpenClaw will be installed in WSL (Ubuntu) using the official install script.'
 
   return (
     <div style={styles.page}>
@@ -24,9 +29,7 @@ export function ReadyPage(): React.JSX.Element {
       <p style={styles.subtitle}>
         Your environment is set up correctly. Click <strong>Install</strong> to begin.
       </p>
-      <p style={styles.detail}>
-        OpenClaw will be installed in WSL (Ubuntu) using the official install script.
-      </p>
+      <p style={styles.detail}>{detailText}</p>
       <button style={styles.button} onClick={handleInstall}>
         Install OpenClaw
       </button>

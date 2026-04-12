@@ -1,18 +1,18 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import { IPC } from '../main/ipc/channels'
 import type { EnvironmentAssessment } from '../main/environment/assessment'
-import type { InstallResult, StepRecord } from '../main/installer/types'
+import type { InstallMode, InstallResult, StepRecord } from '../main/installer/types'
 
 /**
  * Typed API exposed to the renderer via contextBridge.
  * The renderer never accesses ipcRenderer directly.
  */
 const installerApi = {
-  checkEnvironment: (): Promise<EnvironmentAssessment> =>
-    ipcRenderer.invoke(IPC.CHECK_ENVIRONMENT),
+  checkEnvironment: (mode: InstallMode = 'wsl'): Promise<EnvironmentAssessment> =>
+    ipcRenderer.invoke(IPC.CHECK_ENVIRONMENT, mode),
 
-  startInstall: (): Promise<InstallResult> =>
-    ipcRenderer.invoke(IPC.START_INSTALL),
+  startInstall: (mode: InstallMode = 'wsl'): Promise<InstallResult> =>
+    ipcRenderer.invoke(IPC.START_INSTALL, mode),
 
   onInstallProgress: (callback: (step: StepRecord) => void): (() => void) => {
     const listener = (_event: Electron.IpcRendererEvent, step: StepRecord): void =>

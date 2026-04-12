@@ -1,21 +1,30 @@
 import { ipcMain, WebContents } from 'electron'
 import { runEnvironmentAssessment, type EnvironmentAssessment } from '../environment/assessment'
-import { InstallOrchestrator } from '../installer/orchestrator'
+import { createNativeOrchestrator, createWslOrchestrator } from '../installer/orchestrator'
+import { createNativeRunner } from '../installer/native-runner'
 import { createWslRunner } from '../installer/wsl-runner'
-import type { InstallResult, StepRecord } from '../installer/types'
+import type { InstallMode, InstallResult, StepRecord } from '../installer/types'
 import { IPC } from './channels'
 
-type AssessFn = () => Promise<EnvironmentAssessment>
-type InstallFn = () => Promise<InstallResult>
+type AssessFn = (mode: InstallMode) => Promise<EnvironmentAssessment>
+type InstallFn = (mode: InstallMode) => Promise<InstallResult>
 type OnProgressFn = (step: StepRecord) => void
+
+function createOrchestrator(mode: InstallMode) {
+  if (mode === 'native') {
+    return createNativeOrchestrator(createNativeRunner())
+  }
+
+  return createWslOrchestrator(createWslRunner())
+}
 
 /**
  * Pure handler factory for environment check.
  * Accepts an inject-able assess function so it can be tested without Electron.
  */
 export function createCheckEnvironmentHandler(assess: AssessFn) {
-  return async (): Promise<EnvironmentAssessment> => {
-    return assess()
+  return async (mode: InstallMode = 'wsl'): Promise<EnvironmentAssessment> => {
+    return assess(mode)
   }
 }
 
@@ -25,8 +34,8 @@ export function createCheckEnvironmentHandler(assess: AssessFn) {
  * If onProgress throws (e.g. window closed), the error is swallowed — the install result is always returned.
  */
 export function createStartInstallHandler(install: InstallFn, onProgress: OnProgressFn) {
-  return async (): Promise<InstallResult> => {
-    const result = await install()
+  return async (mode: InstallMode = 'wsl'): Promise<InstallResult> => {
+    const result = await install(mode)
     for (const step of result.steps) {
       try {
         onProgress(step)
@@ -43,18 +52,15 @@ export function createStartInstallHandler(install: InstallFn, onProgress: OnProg
  * Call once after the app is ready.
  */
 export function registerIpcHandlers(webContents: () => WebContents | null): void {
-  const runner = createWslRunner()
-  const orchestrator = new InstallOrchestrator(runner)
-
   ipcMain.handle(
     IPC.CHECK_ENVIRONMENT,
-    createCheckEnvironmentHandler(runEnvironmentAssessment)
+    createCheckEnvironmentHandler((mode) => runEnvironmentAssessment(mode))
   )
 
   ipcMain.handle(
     IPC.START_INSTALL,
     createStartInstallHandler(
-      () => orchestrator.install(),
+      async (mode) => createOrchestrator(mode).install(),
       (step) => {
         const wc = webContents()
         if (wc && !wc.isDestroyed()) {

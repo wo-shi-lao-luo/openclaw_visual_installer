@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { createInstallerStore } from '../../../implementation/src/renderer/src/store/installer-store'
 import type { EnvironmentAssessment } from '../../../implementation/src/main/environment/assessment'
-import type { InstallResult, StepRecord } from '../../../implementation/src/main/installer/types'
+import type { InstallMode, InstallResult, StepRecord } from '../../../implementation/src/main/installer/types'
 
 // --- fixtures ---
 
@@ -31,7 +31,7 @@ const INSTALL_SUCCESS: InstallResult = {
   steps: [
     { step: 'detect_existing', success: true, message: 'ok', timestamp: 1 },
     { step: 'run_script', success: true, message: 'ok', timestamp: 2 },
-    { step: 'verify', success: true, message: 'ok', timestamp: 3 }
+    { step: 'verify_install', success: true, message: 'ok', timestamp: 3 }
   ]
 }
 
@@ -55,11 +55,22 @@ describe('installer store', () => {
       expect(store.getState().page).toBe('welcome')
     })
 
+    it('defaults to WSL mode', () => {
+      expect(store.getState().installMode).toBe('wsl')
+    })
+
     it('has no assessment or install result', () => {
       const { assessment, installResult, progressSteps } = store.getState()
       expect(assessment).toBeNull()
       expect(installResult).toBeNull()
       expect(progressSteps).toHaveLength(0)
+    })
+  })
+
+  describe('setInstallMode', () => {
+    it('updates the selected mode', () => {
+      store.getState().setInstallMode('native')
+      expect(store.getState().installMode).toBe('native')
     })
   })
 

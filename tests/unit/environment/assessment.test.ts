@@ -59,61 +59,73 @@ const WSL_UBUNTU_V1: WslStatusResult = {
 // --- tests ---
 
 describe('buildAssessment', () => {
-  it('returns status=ready when Windows and WSL are both satisfied', () => {
-    const result = buildAssessment(WIN_SUPPORTED, WSL_READY)
+  it('returns status=ready when Windows and WSL are both satisfied in WSL mode', () => {
+    const result = buildAssessment(WIN_SUPPORTED, WSL_READY, 'wsl')
     expect(result.status).toBe('ready')
     expect(result.blockers).toHaveLength(0)
   })
 
   it('returns status=not_supported when Windows version is too old', () => {
-    const result = buildAssessment(WIN_TOO_OLD, WSL_READY)
+    const result = buildAssessment(WIN_TOO_OLD, WSL_READY, 'wsl')
     expect(result.status).toBe('not_supported')
     expect(result.blockers.some((b) => b.code === 'WINDOWS_VERSION_TOO_OLD')).toBe(true)
   })
 
   it('returns status=not_supported when Windows version is unknown', () => {
-    const result = buildAssessment(WIN_UNKNOWN, WSL_READY)
+    const result = buildAssessment(WIN_UNKNOWN, WSL_READY, 'wsl')
     expect(result.status).toBe('not_supported')
     expect(result.blockers.some((b) => b.code === 'WINDOWS_VERSION_UNKNOWN')).toBe(true)
   })
 
-  it('returns status=needs_setup when WSL is not installed', () => {
-    const result = buildAssessment(WIN_SUPPORTED, WSL_NOT_INSTALLED)
+  it('returns status=needs_setup when WSL is not installed in WSL mode', () => {
+    const result = buildAssessment(WIN_SUPPORTED, WSL_NOT_INSTALLED, 'wsl')
     expect(result.status).toBe('needs_setup')
     expect(result.blockers.some((b) => b.code === 'WSL_NOT_INSTALLED')).toBe(true)
   })
 
-  it('returns status=needs_setup when Ubuntu is missing', () => {
-    const result = buildAssessment(WIN_SUPPORTED, WSL_NO_UBUNTU)
+  it('returns status=needs_setup when Ubuntu is missing in WSL mode', () => {
+    const result = buildAssessment(WIN_SUPPORTED, WSL_NO_UBUNTU, 'wsl')
     expect(result.status).toBe('needs_setup')
     expect(result.blockers.some((b) => b.code === 'UBUNTU_NOT_INSTALLED')).toBe(true)
   })
 
-  it('returns status=needs_setup when Ubuntu is WSL1', () => {
-    const result = buildAssessment(WIN_SUPPORTED, WSL_UBUNTU_V1)
+  it('returns status=needs_setup when Ubuntu is WSL1 in WSL mode', () => {
+    const result = buildAssessment(WIN_SUPPORTED, WSL_UBUNTU_V1, 'wsl')
     expect(result.status).toBe('needs_setup')
     expect(result.blockers.some((b) => b.code === 'UBUNTU_NOT_WSL2')).toBe(true)
   })
 
-  it('accumulates multiple blockers when both Windows and WSL fail', () => {
-    const result = buildAssessment(WIN_TOO_OLD, WSL_NOT_INSTALLED)
+  it('skips WSL blockers in native mode', () => {
+    const result = buildAssessment(WIN_SUPPORTED, WSL_NOT_INSTALLED, 'native')
+    expect(result.status).toBe('ready')
+    expect(result.blockers).toHaveLength(0)
+  })
+
+  it('still blocks native mode when Windows version is too old', () => {
+    const result = buildAssessment(WIN_TOO_OLD, WSL_READY, 'native')
+    expect(result.status).toBe('not_supported')
+    expect(result.blockers.some((b) => b.code === 'WINDOWS_VERSION_TOO_OLD')).toBe(true)
+  })
+
+  it('accumulates multiple blockers when both Windows and WSL fail in WSL mode', () => {
+    const result = buildAssessment(WIN_TOO_OLD, WSL_NOT_INSTALLED, 'wsl')
     expect(result.blockers.length).toBeGreaterThan(1)
   })
 
   it('marks WSL_NOT_INSTALLED as canAutoResolve=true', () => {
-    const result = buildAssessment(WIN_SUPPORTED, WSL_NOT_INSTALLED)
+    const result = buildAssessment(WIN_SUPPORTED, WSL_NOT_INSTALLED, 'wsl')
     const blocker = result.blockers.find((b) => b.code === 'WSL_NOT_INSTALLED')
     expect(blocker?.canAutoResolve).toBe(true)
   })
 
   it('marks WINDOWS_VERSION_TOO_OLD as canAutoResolve=false', () => {
-    const result = buildAssessment(WIN_TOO_OLD, WSL_READY)
+    const result = buildAssessment(WIN_TOO_OLD, WSL_READY, 'wsl')
     const blocker = result.blockers.find((b) => b.code === 'WINDOWS_VERSION_TOO_OLD')
     expect(blocker?.canAutoResolve).toBe(false)
   })
 
   it('includes the raw windowsVersion and wslStatus in the result', () => {
-    const result = buildAssessment(WIN_SUPPORTED, WSL_READY)
+    const result = buildAssessment(WIN_SUPPORTED, WSL_READY, 'wsl')
     expect(result.windowsVersion).toBe(WIN_SUPPORTED)
     expect(result.wslStatus).toBe(WSL_READY)
   })
@@ -121,17 +133,17 @@ describe('buildAssessment', () => {
 
 describe('assessmentIsReady', () => {
   it('returns true when status is ready', () => {
-    const assessment = buildAssessment(WIN_SUPPORTED, WSL_READY)
+    const assessment = buildAssessment(WIN_SUPPORTED, WSL_READY, 'native')
     expect(assessmentIsReady(assessment)).toBe(true)
   })
 
   it('returns false when status is not_supported', () => {
-    const assessment = buildAssessment(WIN_TOO_OLD, WSL_READY)
+    const assessment = buildAssessment(WIN_TOO_OLD, WSL_READY, 'native')
     expect(assessmentIsReady(assessment)).toBe(false)
   })
 
   it('returns false when status is needs_setup', () => {
-    const assessment = buildAssessment(WIN_SUPPORTED, WSL_NOT_INSTALLED)
+    const assessment = buildAssessment(WIN_SUPPORTED, WSL_NOT_INSTALLED, 'wsl')
     expect(assessmentIsReady(assessment)).toBe(false)
   })
 })

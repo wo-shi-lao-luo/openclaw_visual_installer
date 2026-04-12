@@ -1,6 +1,6 @@
 import { createStore } from 'zustand/vanilla'
 import type { EnvironmentAssessment } from '../../../main/environment/assessment'
-import type { InstallResult, StepRecord } from '../../../main/installer/types'
+import type { InstallMode, InstallResult, StepRecord } from '../../../main/installer/types'
 
 export type WizardPage =
   | 'welcome'
@@ -14,11 +14,13 @@ export type WizardPage =
 
 export interface InstallerState {
   page: WizardPage
+  installMode: InstallMode
   assessment: EnvironmentAssessment | null
   installResult: InstallResult | null
   progressSteps: StepRecord[]
   // actions
   goTo: (page: WizardPage) => void
+  setInstallMode: (mode: InstallMode) => void
   setAssessment: (assessment: EnvironmentAssessment) => void
   setInstallResult: (result: InstallResult) => void
   addProgressStep: (step: StepRecord) => void
@@ -40,6 +42,7 @@ function pageFromInstallState(state: InstallResult['state']): WizardPage {
 export function createInstallerStore() {
   return createStore<InstallerState>((set) => ({
     page: 'welcome',
+    installMode: 'wsl',
     assessment: null,
     installResult: null,
     progressSteps: [],
@@ -50,6 +53,8 @@ export function createInstallerStore() {
         // clear progress whenever we navigate to installing
         progressSteps: page === 'installing' ? [] : s.progressSteps
       })),
+
+    setInstallMode: (installMode) => set({ installMode }),
 
     setAssessment: (assessment) =>
       set({ assessment, page: pageFromAssessmentStatus(assessment.status) }),
