@@ -36,3 +36,6 @@ coverage/
 CLAUDE.md
 TASKS.md
 .claude/
+
+# Development planning docs (not user-facing)
+project-manager/
