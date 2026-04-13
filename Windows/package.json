@@ -1,0 +1,20 @@
+{
+  "name": "openclaw-windows-installer",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "start": "npm run build && node dist/src/runtime/cli.js",
+    "mvp": "npm run start",
+    "mvp:auto": "npm run build && node dist/src/runtime/cli.js --auto",
+    "mvp:uninstall": "npm run build && node dist/src/runtime/cli.js --uninstall --auto",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.5.4",
+    "vitest": "^2.1.8"
+  }
+}

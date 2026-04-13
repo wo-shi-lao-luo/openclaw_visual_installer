@@ -37,5 +37,9 @@ CLAUDE.md
 TASKS.md
 .claude/
 
+# Local-only sandbox launcher
+Windows/scripts/launch-sandbox.ps1
+Windows/scripts/.sandbox-bootstrap.ps1
+
 # Development planning docs (not user-facing)
 project-manager/
