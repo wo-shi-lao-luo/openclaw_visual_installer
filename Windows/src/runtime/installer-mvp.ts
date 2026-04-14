@@ -187,9 +187,6 @@ export async function runInstallerMvp(
   io.writeLine('');
   io.writeLine('OpenClaw is installed and ready.');
   io.writeLine(`CLI path: ${openClawVerifyResult.cliPath}`);
-  if (openClawVerifyResult.gatewayReachable) {
-    io.writeLine('Gateway: running');
-  }
   io.writeLine('');
   io.writeLine('Open a new PowerShell window and run: openclaw --version');
 

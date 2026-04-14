@@ -8,4 +8,10 @@ if (!container) {
   throw new Error('Root element #root not found');
 }
 
-createRoot(container).render(<App />);
+import { LocaleProvider } from './i18n/LocaleContext.js';
+
+createRoot(container).render(
+  <LocaleProvider>
+    <App />
+  </LocaleProvider>
+);

@@ -94,8 +94,6 @@ export const RunCompleteResultSchema = z.object({
     .object({
       cliFound: z.boolean(),
       cliPath: z.string().optional(),
-      gatewayReachable: z.boolean(),
-      gatewayOutput: z.string().optional(),
       message: z.string(),
     })
     .optional(),

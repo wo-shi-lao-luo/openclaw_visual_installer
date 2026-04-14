@@ -1,14 +1,12 @@
 import React, { useCallback, useReducer } from 'react';
-import {
-  createInitialState,
-  installerReducer,
-} from './state/installerStore.js';
+import { createInitialState, installerReducer } from './state/installerStore.js';
 import { useInstallerEvents } from './hooks/useInstallerEvents.js';
 import { StartScreen } from './components/StartScreen.js';
-import { StepList } from './components/StepList.js';
-import { LogPane } from './components/LogPane.js';
+import { HorizontalTimeline } from './components/HorizontalTimeline.js';
+import { ProgressBar } from './components/ProgressBar.js';
+import { StreamMessage } from './components/StreamMessage.js';
 import { ConfirmModal } from './components/ConfirmModal.js';
-import { ResultScreen } from './components/ResultScreen.js';
+import { ResultSection } from './components/ResultSection.js';
 import type { InstallerEvent } from '../../shared/ipc-contract.js';
 
 export function App(): React.ReactElement {
@@ -41,33 +39,40 @@ export function App(): React.ReactElement {
 
   function handleRestart() {
     dispatch({ type: 'START_RUN', mode: 'install' });
+    window.installerApi.start({ mode: 'install' });
   }
+
+  const isActive = state.phase === 'running' || state.phase === 'success' || state.phase === 'failed';
 
   return (
     <div className="app">
-      <header className="app__header">
-        <span className="app__brand">OpenClaw Installer</span>
-      </header>
+      {isActive && (
+        <header className="app__header">
+          <span className="app__header-lobster" aria-hidden="true">🦞</span>
+          <span className="app__header-name">OpenClaw</span>
+          <span className="app__header-version">v0.3.0</span>
+        </header>
+      )}
 
-      <main className="app__main">
+      <div className="app__body">
         {state.phase === 'idle' && <StartScreen onStart={handleStart} />}
 
-        {(state.phase === 'running' || state.phase === 'success' || state.phase === 'failed') && (
-          <>
-            <StepList steps={state.steps} />
-            <LogPane logs={state.logs} />
-          </>
+        {isActive && (
+          <div className="installer-view">
+            <HorizontalTimeline steps={state.steps} />
+            <ProgressBar steps={state.steps} phase={state.phase} />
+            <StreamMessage logs={state.logs} steps={state.steps} />
+            {(state.phase === 'success' || state.phase === 'failed') && (
+              <ResultSection
+                success={state.phase === 'success'}
+                result={state.result}
+                errorMessage={state.errorMessage}
+                onRestart={handleRestart}
+              />
+            )}
+          </div>
         )}
-
-        {(state.phase === 'success' || state.phase === 'failed') && (
-          <ResultScreen
-            success={state.phase === 'success'}
-            result={state.result}
-            errorMessage={state.errorMessage}
-            onRestart={handleRestart}
-          />
-        )}
-      </main>
+      </div>
 
       {state.pendingPrompt && (
         <ConfirmModal

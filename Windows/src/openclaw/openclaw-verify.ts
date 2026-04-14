@@ -1,13 +1,8 @@
-import { runProcess, runPowerShellCommand, type SpawnFn } from '../powershell/ps-runner.js';
-
-// See: https://docs.openclaw.ai/install
-export const OPENCLAW_GATEWAY_PORT = 18789;
+import { runProcess, type SpawnFn } from '../powershell/ps-runner.js';
 
 export interface OpenClawVerifyResult {
   cliFound: boolean;
   cliPath?: string;
-  gatewayReachable?: boolean;
-  gatewayOutput?: string;
   message: string;
 }
 
@@ -31,20 +26,9 @@ export async function verifyOpenClaw(options: OpenClawVerifyOptions = {}): Promi
 
   const cliPath = whereResult.stdout.trim().split('\n')[0]?.trim() ?? '';
 
-  const statusResult = await runPowerShellCommand('openclaw gateway status', {
-    spawnFn: options.spawnFn,
-    timeoutMs: 15_000,
-  });
-
   return {
     cliFound: true,
     cliPath,
-    gatewayReachable: statusResult.success,
-    gatewayOutput: statusResult.stdout.trim() || undefined,
-    message: `OpenClaw CLI found at ${cliPath}.${
-      statusResult.success
-        ? ` Gateway is reachable on port ${OPENCLAW_GATEWAY_PORT}.`
-        : ' Gateway is not yet running.'
-    }`,
+    message: `OpenClaw CLI found at ${cliPath}.`,
   };
 }

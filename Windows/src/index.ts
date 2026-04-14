@@ -4,7 +4,7 @@ export { detectWindowsEnvironment } from './environment/windows-checks.js';
 export { createPhaseOnePlan } from './installer/orchestrator.js';
 export { runPowerShellCommand, runProcess } from './powershell/ps-runner.js';
 export { installOpenClaw, buildInstallCommand, OPENCLAW_INSTALL_SCRIPT_URL, NODE_VERSION, NODE_DOWNLOAD_URL } from './openclaw/openclaw-install.js';
-export { verifyOpenClaw, OPENCLAW_GATEWAY_PORT } from './openclaw/openclaw-verify.js';
+export { verifyOpenClaw } from './openclaw/openclaw-verify.js';
 export { createAppShellModel } from './shell/AppShell.js';
 export { runInstallerMvp, runInstallerMvpUninstall } from './runtime/installer-mvp.js';
 export {
