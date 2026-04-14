@@ -29,6 +29,8 @@ export interface InstallerMvpOptions {
   bootstrapOptions?: BootstrapWindowsInstallerOptions;
   autoConfirm?: boolean;
   installOptions?: WindowsInstallerMvpInstallOptions;
+  /** Called after each step status transition. Receives a shallow copy of the updated step. */
+  onStepChange?: (step: Readonly<InstallerMvpStepState>) => void;
 }
 
 export interface InstallerMvpDeps {
@@ -61,11 +63,13 @@ function setStepStatus(
   id: InstallerStepId,
   status: InstallerMvpStepStatus,
   detail?: string,
+  onStepChange?: (step: Readonly<InstallerMvpStepState>) => void,
 ): void {
   const step = steps.find((candidate) => candidate.id === id);
   if (step) {
     step.status = status;
     step.detail = detail;
+    onStepChange?.({ ...step });
   }
 }
 
@@ -98,34 +102,40 @@ export async function runInstallerMvp(
   const bootstrap = options.bootstrap ?? bootstrapWindowsInstaller(options.bootstrapOptions);
   const steps = createStepStates(bootstrap);
   const autoConfirm = options.autoConfirm ?? false;
+  const { onStepChange } = options;
 
   const installOpenClawFn = deps.installOpenClaw ?? installOpenClaw;
   const verifyOpenClawFn = deps.verifyOpenClaw ?? verifyOpenClaw;
+
+  // Local shorthand that captures onStepChange
+  function setStep(id: InstallerStepId, status: InstallerMvpStepStatus, detail?: string): void {
+    setStepStatus(steps, id, status, detail, onStepChange);
+  }
 
   printBootstrap(io, bootstrap);
 
   // ── Step 1: Environment check ─────────────────────────────────────────────
   if (!bootstrap.environment.supported) {
-    setStepStatus(steps, 'environment-check', 'skipped', 'Unsupported host platform');
+    setStep('environment-check', 'skipped', 'Unsupported host platform');
     io.writeLine('Environment check failed: this installer must run on Windows.');
     io.writeLine('Nothing was installed.');
     return { success: false, aborted: true, abortedAt: 'environment-check', bootstrap, steps };
   }
 
-  setStepStatus(steps, 'environment-check', 'completed', 'Windows host confirmed');
+  setStep('environment-check', 'completed', 'Windows host confirmed');
   io.writeLine('Environment check passed.');
 
   // ── Step 2: Validate ──────────────────────────────────────────────────────
   if (!(await confirmStep(io, 'Install OpenClaw on this machine?', autoConfirm))) {
-    setStepStatus(steps, 'validate', 'skipped', 'User cancelled');
+    setStep('validate', 'skipped', 'User cancelled');
     io.writeLine('Installation cancelled.');
     return { success: false, aborted: true, abortedAt: 'validate', bootstrap, steps };
   }
 
-  setStepStatus(steps, 'validate', 'completed', 'User confirmed install');
+  setStep('validate', 'completed', 'User confirmed install');
 
   // ── Step 3: Install OpenClaw ──────────────────────────────────────────────
-  setStepStatus(steps, 'install', 'running', 'Running OpenClaw install script');
+  setStep('install', 'running', 'Running OpenClaw install script');
   io.writeLine('Installing OpenClaw...');
   io.writeLine('(This may take a few minutes.)');
   io.writeLine('');
@@ -137,32 +147,32 @@ export async function runInstallerMvp(
   io.writeLine('');
 
   if (!openClawInstallResult.success) {
-    setStepStatus(steps, 'install', 'failed', openClawInstallResult.message);
+    setStep('install', 'failed', openClawInstallResult.message);
     io.writeLine(`OpenClaw installation failed: ${openClawInstallResult.message}`);
     return { success: false, aborted: false, bootstrap, steps, openClawInstallResult };
   }
 
-  setStepStatus(steps, 'install', 'completed', openClawInstallResult.message);
+  setStep('install', 'completed', openClawInstallResult.message);
   io.writeLine('Install script completed.');
 
   // ── Step 4: Verify ────────────────────────────────────────────────────────
-  setStepStatus(steps, 'verify', 'running', 'Verifying OpenClaw CLI on PATH');
+  setStep('verify', 'running', 'Verifying OpenClaw CLI on PATH');
   io.writeLine('Verifying installation...');
 
   const openClawVerifyResult = await verifyOpenClawFn();
 
   if (!openClawVerifyResult.cliFound) {
-    setStepStatus(steps, 'verify', 'failed', openClawVerifyResult.message);
+    setStep('verify', 'failed', openClawVerifyResult.message);
     io.writeLine(`Verification failed: ${openClawVerifyResult.message}`);
     io.writeLine('Try opening a new PowerShell window and running: openclaw --version');
     return { success: false, aborted: false, bootstrap, steps, openClawInstallResult, openClawVerifyResult };
   }
 
-  setStepStatus(steps, 'verify', 'completed', openClawVerifyResult.message);
+  setStep('verify', 'completed', openClawVerifyResult.message);
   io.writeLine(`Verification passed. ${openClawVerifyResult.message}`);
 
   // ── Step 5: Finalize ──────────────────────────────────────────────────────
-  setStepStatus(steps, 'finalize', 'running', 'Writing manifest and launcher');
+  setStep('finalize', 'running', 'Writing manifest and launcher');
   io.writeLine('Finalizing setup...');
 
   const installResult = await installWindowsInstallerMvp({
@@ -173,7 +183,7 @@ export async function runInstallerMvp(
       : (options.installOptions?.platform ?? process.platform),
   });
 
-  setStepStatus(steps, 'finalize', 'completed', 'Setup complete');
+  setStep('finalize', 'completed', 'Setup complete');
   io.writeLine('');
   io.writeLine('OpenClaw is installed and ready.');
   io.writeLine(`CLI path: ${openClawVerifyResult.cliPath}`);
@@ -200,26 +210,31 @@ export async function runInstallerMvpUninstall(
 ): Promise<InstallerMvpRunResult> {
   const bootstrap = options.bootstrap ?? bootstrapWindowsInstaller(options.bootstrapOptions);
   const steps = createStepStates(bootstrap);
+  const { onStepChange } = options;
+
+  function setStep(id: InstallerStepId, status: InstallerMvpStepStatus, detail?: string): void {
+    setStepStatus(steps, id, status, detail, onStepChange);
+  }
 
   printBootstrap(io, bootstrap);
 
   if (!bootstrap.environment.supported) {
-    setStepStatus(steps, 'environment-check', 'skipped', 'Unsupported host platform');
+    setStep('environment-check', 'skipped', 'Unsupported host platform');
     io.writeLine('Environment check failed: this installer must run on Windows.');
     io.writeLine('Nothing was removed.');
     return { success: false, aborted: true, abortedAt: 'environment-check', bootstrap, steps };
   }
 
-  setStepStatus(steps, 'environment-check', 'completed', 'Windows host confirmed');
+  setStep('environment-check', 'completed', 'Windows host confirmed');
   io.writeLine('Environment check passed.');
 
   if (!(await confirmStep(io, 'Remove the local installer record?', options.autoConfirm ?? false))) {
-    setStepStatus(steps, 'install', 'skipped', 'User cancelled');
+    setStep('install', 'skipped', 'User cancelled');
     io.writeLine('Uninstall cancelled.');
     return { success: false, aborted: true, abortedAt: 'uninstall', bootstrap, steps };
   }
 
-  setStepStatus(steps, 'install', 'running', 'Removing local installation record');
+  setStep('install', 'running', 'Removing local installation record');
   const uninstallResult = await uninstallWindowsInstallerMvp({
     ...options.installOptions,
     logger: createLogger(io),
@@ -227,8 +242,8 @@ export async function runInstallerMvpUninstall(
       ? 'win32'
       : (options.installOptions?.platform ?? process.platform),
   });
-  setStepStatus(steps, 'install', 'completed', uninstallResult.removed ? 'Record removed' : 'Nothing to remove');
-  setStepStatus(steps, 'finalize', 'completed', 'Uninstall finished');
+  setStep('install', 'completed', uninstallResult.removed ? 'Record removed' : 'Nothing to remove');
+  setStep('finalize', 'completed', 'Uninstall finished');
 
   io.writeLine(`Uninstall complete. Removed: ${uninstallResult.removed ? 'yes' : 'no'}`);
   io.writeLine('Note: the OpenClaw CLI itself was not uninstalled. Run `openclaw uninstall` to remove it.');

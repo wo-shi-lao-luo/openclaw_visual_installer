@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "CommonJS",
+    "moduleResolution": "Node",
+    "lib": ["ES2020"],
+    "strict": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "esModuleInterop": true,
+    "outDir": "../dist-gui/main",
+    "types": ["node"],
+    "sourceMap": true
+  },
+  "include": ["main/**/*.ts", "shared/**/*.ts", "../src/**/*.ts"],
+  "exclude": ["renderer/**"]
+}

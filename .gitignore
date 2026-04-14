@@ -4,6 +4,10 @@ node_modules/
 # Build output
 out/
 dist/
+Windows/dist-gui/
+# Accidental tsc emission alongside source files (emitted by tsconfig.main.json)
+Windows/src/**/*.js
+Windows/src/**/*.js.map
 
 # Logs
 *.log
