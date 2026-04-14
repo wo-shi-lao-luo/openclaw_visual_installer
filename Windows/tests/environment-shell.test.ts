@@ -44,9 +44,9 @@ describe('environment, shell, and orchestrator wiring', () => {
 
     expect(plan.phase).toBe('phase-one');
     expect(plan.ready).toBe(true);
-    expect(plan.steps).toHaveLength(4);
+    expect(plan.steps).toHaveLength(5);
     expect(plan.notes[0]).toMatchObject({
-      code: 'phase-one-ready',
+      code: 'phase-two-ready',
       level: 'info',
     });
 
@@ -66,7 +66,7 @@ describe('environment, shell, and orchestrator wiring', () => {
 
     expect(blockedPlan.ready).toBe(false);
     expect(blockedPlan.notes[0]).toMatchObject({
-      code: 'phase-one-blocked',
+      code: 'phase-two-blocked',
       level: 'warning',
     });
   });

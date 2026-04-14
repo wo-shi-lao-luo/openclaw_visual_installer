@@ -23,6 +23,7 @@ describe('bootstrapWindowsInstaller', () => {
       'environment-check',
       'validate',
       'install',
+      'verify',
       'finalize',
     ]);
 
@@ -35,7 +36,7 @@ describe('bootstrapWindowsInstaller', () => {
       context: { phase: 'phase-one', ready: true },
     });
     expect(bootstrap.diagnostics.notes.map((note) => note.code)).toEqual(
-      expect.arrayContaining(['windows-environment-supported', 'shell-framework-agnostic', 'phase-one-ready']),
+      expect.arrayContaining(['windows-environment-supported', 'shell-framework-agnostic', 'phase-two-ready']),
     );
   });
 });

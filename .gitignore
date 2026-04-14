@@ -37,9 +37,10 @@ CLAUDE.md
 TASKS.md
 .claude/
 
-# Local-only sandbox launcher
+# Local-only sandbox tooling (dev/test only, not part of the product)
 Windows/scripts/launch-sandbox.ps1
 Windows/scripts/.sandbox-bootstrap.ps1
+Windows/launcher/sandbox-launcher.cjs
 
 # Development planning docs (not user-facing)
 project-manager/

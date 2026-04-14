@@ -1,25 +1,30 @@
 import type { EnvironmentCheckResult, PhaseOnePlan, InstallerStep, ShellModel } from '../shared/types.js';
 
-const PHASE_ONE_STEPS: InstallerStep[] = [
+const PHASE_TWO_STEPS: InstallerStep[] = [
   {
     id: 'environment-check',
     label: 'Environment check',
-    purpose: 'Confirm the local machine is ready for the Windows installer path.',
+    purpose: 'Confirm this machine runs Windows.',
   },
   {
     id: 'validate',
     label: 'Validate prerequisites',
-    purpose: 'Confirm the installer can write to its local install root before copying payload files.',
+    purpose: 'Confirm the installer can write to its local install root before running.',
   },
   {
     id: 'install',
-    label: 'Install payload',
-    purpose: 'Copy the runnable Windows MVP payload into the local install directory.',
+    label: 'Install OpenClaw',
+    purpose: 'Run the OpenClaw PowerShell install script (https://openclaw.ai/install.ps1).',
+  },
+  {
+    id: 'verify',
+    label: 'Verify installation',
+    purpose: 'Confirm the OpenClaw CLI is on PATH after installation.',
   },
   {
     id: 'finalize',
     label: 'Finalize setup',
-    purpose: 'Write the manifest, expose the launcher, and complete the install flow.',
+    purpose: 'Write the install manifest and set up the local launcher.',
   },
 ];
 
@@ -34,23 +39,23 @@ export function createPhaseOnePlan(input: PhaseOnePlanInput): PhaseOnePlan {
   const notes = ready
     ? [
         {
-          code: 'phase-one-ready',
+          code: 'phase-two-ready',
           level: 'info' as const,
-          message: `Shell "${input.shell.title}" can proceed through the Phase 1 scaffold.`,
+          message: `Shell "${input.shell.title}" is ready to install OpenClaw.`,
         },
       ]
     : [
         {
-          code: 'phase-one-blocked',
+          code: 'phase-two-blocked',
           level: 'warning' as const,
-          message: 'Environment checks are not ready yet, so the installer plan remains in scaffold mode.',
+          message: 'Environment check did not pass. The installer cannot proceed on this host.',
         },
       ];
 
   return {
     phase: 'phase-one',
     ready,
-    steps: PHASE_ONE_STEPS,
+    steps: PHASE_TWO_STEPS,
     notes,
   };
 }

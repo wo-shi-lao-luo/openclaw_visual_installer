@@ -1,6 +1,6 @@
 export type DiagnosticLevel = 'info' | 'warning' | 'error';
 
-export type InstallerStepId = 'environment-check' | 'validate' | 'install' | 'finalize';
+export type InstallerStepId = 'environment-check' | 'validate' | 'install' | 'verify' | 'finalize';
 
 export type InstallerPhase = 'booting' | 'environment-check' | 'ready-to-install' | 'installing' | 'complete';
 

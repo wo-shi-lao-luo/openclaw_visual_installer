@@ -1,6 +1,5 @@
-import { access, copyFile, mkdir, readdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
+import { access, mkdir, readdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
 import { dirname, isAbsolute, join, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
 
 export const WINDOWS_INSTALLER_PRODUCT_NAME = 'OpenClaw Windows Installer MVP';
 export const WINDOWS_INSTALLER_INSTALL_FOLDER = 'OpenClaw/WindowsInstallerMVP';
@@ -67,7 +66,7 @@ export function resolveDefaultWindowsInstallerInstallRoot(): string {
 }
 
 export function resolveBuiltWindowsInstallerPayloadRoot(): string {
-  return fileURLToPath(new URL('../../../', import.meta.url));
+  return resolve(__dirname, '..', '..', '..');
 }
 
 async function pathExists(path: string): Promise<boolean> {
@@ -95,7 +94,8 @@ async function copyDirectoryTree(source: string, destination: string, relativePa
     }
 
     if (entry.isFile()) {
-      await copyFile(sourceEntry, destinationEntry);
+      const content = await readFile(sourceEntry);
+      await writeFile(destinationEntry, content);
       installedFiles.push(relativeEntry.split('\\').join('/'));
     }
   }
