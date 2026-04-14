@@ -4,37 +4,30 @@ copyright: Copyright © OpenClaw
 
 directories:
   output: ../dist-gui/packages
-  buildResources: build
+  buildResources: gui/build
 
 files:
   - dist-gui/main/**/*
-  - dist-gui/renderer/**/*
-  # Include the compiled installer logic (required by main process at runtime)
+  # dist-gui/renderer is placed in extraResources (outside asar) for reliable file:// loading
   - dist/src/**/*.js
   - package.json
 
-# Ensure node_modules for runtime dependencies (react, zod) are bundled via
-# electron-builder's dependency tree walk. If they become tree-shakeable via
-# Vite/rollup, this can be removed.
-extraResources: []
+# Renderer is served as plain files outside the asar so loadFile works without
+# any asar-interception subtleties.
+extraResources:
+  - from: dist-gui/renderer
+    to: renderer
 
 asar: true
 
 win:
   target:
-    - target: nsis
+    - target: portable
       arch:
         - x64
   icon: build/icon.ico
-
-nsis:
-  oneClick: false
-  allowToChangeInstallationDirectory: false
-  perMachine: false
-  createDesktopShortcut: true
-  createStartMenuShortcut: true
-  shortcutName: OpenClaw Installer
-  include: build/installer.nsh
-  deleteAppDataOnUninstall: false
+  sign: false
+  signAndEditExecutable: false
+  signingHashAlgorithms: []
 
 publish: null

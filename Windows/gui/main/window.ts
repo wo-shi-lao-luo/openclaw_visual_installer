@@ -1,4 +1,4 @@
-import { BrowserWindow } from 'electron';
+import { app, BrowserWindow, dialog } from 'electron';
 import path from 'node:path';
 
 const isDev = process.env['ELECTRON_DEV'] === '1';
@@ -26,10 +26,17 @@ export function createWindow(): BrowserWindow {
     win.loadURL('http://localhost:5173');
     win.webContents.openDevTools();
   } else {
-    // __dirname = dist-gui/main/main/  →  renderer is at dist-gui/renderer/
-    const rendererIndex = path.join(__dirname, '..', '..', 'renderer', 'index.html');
-    win.loadFile(rendererIndex);
+    // extraResources copies dist-gui/renderer → resources/renderer/ (outside asar)
+    // process.resourcesPath is reliable in all packaging modes
+    const rendererIndex = path.join(process.resourcesPath, 'renderer', 'index.html');
+    win.loadFile(rendererIndex).catch((err: unknown) => {
+      dialog.showErrorBox('Failed to load UI', String(err));
+    });
   }
+
+  win.webContents.on('did-fail-load', (_e, code, desc) => {
+    dialog.showErrorBox('Renderer failed to load', `${code}: ${desc}`);
+  });
 
   win.once('ready-to-show', () => {
     win.show();

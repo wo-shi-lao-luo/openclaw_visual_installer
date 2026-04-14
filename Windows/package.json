@@ -1,7 +1,10 @@
 {
   "name": "openclaw-windows-installer",
+  "version": "0.3.0",
+  "description": "OpenClaw Windows Installer",
+  "author": "OpenClaw",
   "private": true,
-  "main": "dist-gui/main/main/index.js",
+  "main": "dist-gui/main/gui/main/index.js",
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "build:exe": "npm run build && npx pkg launcher/installer-launcher.cjs --config package.json --targets node18-win-x64 --output dist/OpenClawInstaller.exe",
@@ -13,7 +16,7 @@
     "build:gui:renderer": "vite build -c gui/vite.config.ts",
     "build:gui": "npm run build && npm run build:gui:main && npm run build:gui:renderer",
     "dev:gui": "concurrently -k -n vite,main,electron \"vite -c gui/vite.config.ts\" \"tsc -p gui/tsconfig.main.json --watch\" \"wait-on http://localhost:5173 && cross-env ELECTRON_DEV=1 electron .\"",
-    "dist:gui": "npm run build:gui && electron-builder --config gui/electron-builder.yml --win nsis",
+    "dist:gui": "npm run build:gui && electron-builder --config gui/electron-builder.yml --win portable",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc -p tsconfig.json --noEmit"
